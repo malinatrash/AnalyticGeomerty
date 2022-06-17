@@ -1,0 +1,145 @@
+//---------------------------------------------------------------------------
+
+#include <vcl.h>
+#include <vector>
+#include <cmath>
+#include <algorithm>
+#pragma hdrstop
+
+#include "main.h"
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma resource "*.dfm"
+TForm1 *Form1;
+//---------------------------------------------------------------------------
+__fastcall TForm1::TForm1(TComponent* Owner)
+	: TForm(Owner) {
+}
+
+int countOfPoints = 0;
+int countOfPointsTrianlge = 0;
+int radiusOfCircle = 1;
+double min = 99999;
+
+std::vector<double> xTriangle(countOfPointsTrianlge);
+std::vector<double> yTriangle(countOfPointsTrianlge);
+
+std::vector<double> xCords(countOfPoints);
+std::vector<double> yCords(countOfPoints);
+//---------------------------------------------------------------------------
+void __fastcall TForm1::AddbuttonClick(TObject *Sender)
+{
+	xCords.push_back(x->Value);
+	yCords.push_back(y->Value);
+
+	countOfPoints += 1;
+
+	x->Value = 0;
+	y->Value = 0;
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::ConfirmButtonClick(TObject *Sender)
+{
+	radiusOfCircle = radius->Value;
+}
+
+bool check(double x1,double y1,double x2,double y2,double r) {
+	double d1 = sqrt((x1*x1+y1*y1));
+	double d2 = sqrt((x2*x2+y2*y2));
+	if(((d1 < r) && (d2 > r)) || ((d1 > r) && (d2 < r))){
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+void mainLogic() {
+	for (int i = 0; i < xCords.size() - 1; i++) {
+		double x1 = xCords[i];
+		double y1 = yCords[i];
+
+		for (int j = 0; j < xCords.size() - 1; j++) {
+			double x2 = xCords[j];
+			double y2 = yCords[j];
+			if (x1 != x2 && y1 != y2) {
+				if (check(x1, y1, x2, y2, radiusOfCircle)) {
+					for (int z = 0; z < xCords.size() -1; z++) {
+						double x3 = xCords[z];
+						double y3 = yCords[z];
+						if(x2 != x3 && y2 != y3 && x1 != x3 && y1 != y3) {
+							if (check(x1, y1, x3, y3, radiusOfCircle) && check(x2, y2, x3, y3, radiusOfCircle)) {
+
+								countOfPointsTrianlge += 6;
+
+								xTriangle.push_back(x1);
+								xTriangle.push_back(x2);
+								xTriangle.push_back(x3);
+
+								yTriangle.push_back(y1);
+								yTriangle.push_back(y2);
+								yTriangle.push_back(y3);
+
+								double temp = (abs(x1*(y2-y3)+x2*(y3-y1)+x3*(y1-y2) )/2.0);
+
+								if (temp < min) {
+									min = temp;
+								}
+                            }
+						}
+					}
+				}
+			}
+		}
+	}
+    AnsiString msg = "Min square of triangles - ";
+	msg += AnsiString(min);
+
+	if (min == 99999) {
+		ShowMessage("Anyone triagle is not exsists!");
+	} else {
+		ShowMessage(msg);
+	}
+}
+//---------------------------------------------------------------------------
+void __fastcall TForm1::GetResultsbuttonClick(TObject *Sender)
+{
+	radiusOfCircle = radius->Value;
+
+	int currentWidth = 0;
+	int currentHeight = 0;
+
+	int x0 = MainPaintBox->Width / 2;
+	int y0 = MainPaintBox->Height / 2;
+
+	MainPaintBox->Canvas->Pen->Color = clRed;
+
+	MainPaintBox->Canvas->Ellipse (x0 - radiusOfCircle * 10, y0 + radiusOfCircle * 10, x0 + radiusOfCircle * 10, y0 - radiusOfCircle* 10);
+
+	MainPaintBox->Canvas->Pen->Color = clBlack;
+
+	MainPaintBox->Canvas->MoveTo(0, y0);
+	MainPaintBox->Canvas->LineTo(x0 * 2, y0);
+	MainPaintBox->Canvas->MoveTo(x0, 0);
+	MainPaintBox->Canvas->LineTo(x0, y0 * 2);
+	MainPaintBox->Canvas->Pen->Color = clRed;
+
+	mainLogic();
+
+	if (xTriangle.size() == 0) {
+		ShowMessage("0 points");
+    }
+
+	for (int i = 0; i < xTriangle.size() - 2; i++) {
+
+		MainPaintBox->Canvas->MoveTo(x0 + xTriangle[i] * 10, y0 - yTriangle[i] * 10);
+		MainPaintBox->Canvas->LineTo(x0 + xTriangle[i + 1] * 10, y0 - yTriangle[i + 1] * 10);
+
+		MainPaintBox->Canvas->MoveTo(x0 + xTriangle[i + 1] * 10, y0 - yTriangle[i + 1] * 10);
+		MainPaintBox->Canvas->LineTo(x0 + xTriangle[i + 2] * 10, y0 - yTriangle[i + 2] * 10);
+
+		MainPaintBox->Canvas->MoveTo(x0 + xTriangle[i + 2] * 10, y0 - yTriangle[i + 2] * 10);
+		MainPaintBox->Canvas->LineTo(x0 + xTriangle[i] * 10, y0 - yTriangle[i] * 10);
+	}
+}
+//---------------------------------------------------------------------------
